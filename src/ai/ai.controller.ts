@@ -6,9 +6,10 @@ import { ChatAiDto } from './dto/chat-ai.dto';
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
-  @Post("chat")
-  async chat(@Body() dto: ChatAiDto){
-    const answer = await this.aiService.chat(dto.message)
-    return {answer}
+  @Post('chat')
+  async chat(@Body() dto: ChatAiDto) {
+    const answer = await this.aiService.chat(dto.messages);
+    return { answer };
   }
+
 }
