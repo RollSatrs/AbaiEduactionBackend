@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
-import { systemCoachPrompt } from 'shared/constants/pronts';
+import { prontOne, systemCoachPrompt } from 'shared/constants/pronts';
+import { ChatAiDto, InputMessage, Role } from './dto/chat-ai.dto';
+import { response } from 'express';
+import { KnowledgeAnalysis } from 'shared/interface/ai.interface';
 
 @Injectable()
 export class AiService {
@@ -10,15 +13,13 @@ export class AiService {
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API });
   }
 
-  async chat(messages: { role: "user" | "ai"; text: string }[]): Promise<string> {
-    // Преобразуем роли в формат OpenAI
+  async analyzeKnowledge(messages: InputMessage[]): Promise<KnowledgeAnalysis> {
     const openaiMessages: { role: "system" | "user" | "assistant"; content: string }[] =
       [
-        { role: "system", content: systemCoachPrompt },
+        { role: "system", content: prontOne },
         ...messages.map(m => ({
-          // Явно приводим тип к "user" | "assistant"
           role: (m.role === "user" ? "user" : "assistant") as "user" | "assistant",
-          content: m.text
+          content: m.content
         }))
       ];
 
@@ -27,6 +28,16 @@ export class AiService {
       messages: openaiMessages
     });
 
-    return response.choices[0].message?.content ?? "Ошибка";
+    const text =  response.choices[0].message?.content ?? "Ошибка";
+
+    try{
+      const json = JSON.parse(text)
+      return json as KnowledgeAnalysis
+    }catch(err){
+      console.error("Ошибка при парсинге JSON от ИИ:", text);
+      throw new Error("ИИ вернул некорректный JSON");
+    }
+
+
   }
 }
